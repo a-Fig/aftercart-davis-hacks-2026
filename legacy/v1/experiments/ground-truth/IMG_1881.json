@@ -1,0 +1,26 @@
+{
+  "image": "IMG_1881.jpg",
+  "store_name": "Costco",
+  "store_address_substr": "150 Lawrence Station",
+  "receipt_date": null,
+  "receipt_total": 153.28,
+  "item_count": 15,
+  "notes": "Receipt prints 'TOTAL NUMBER OF ITEMS SOLD = 8' mid-receipt then has 7 more items below. Real total is 15. SUBTOTAL is 150.06, TAX 3.22, TOTAL 153.28.",
+  "items": [
+    { "code": "1823420", "description_keywords": ["RUSTIC", "ITALN"], "canonical_match": null, "shelf_price": 5.99, "member_price": 5.99 },
+    { "code": "990551", "description_keywords": ["BASIL", "PESTO"], "canonical_match": null, "shelf_price": 9.99, "member_price": 9.99 },
+    { "code": "1063232", "description_keywords": ["KS", "EGG", "WHITE"], "canonical_match": "Eggs", "shelf_price": 11.99, "member_price": 11.99 },
+    { "code": "60357", "description_keywords": ["MIXED", "PEPPER"], "canonical_match": null, "shelf_price": 8.49, "member_price": 8.49 },
+    { "code": "30669", "description_keywords": ["BANANAS"], "canonical_match": "Bananas", "shelf_price": 1.99, "member_price": 1.99 },
+    { "code": null, "description_keywords": ["2", "MILK"], "canonical_match": "Whole milk", "shelf_price": 6.40, "member_price": 6.40 },
+    { "code": "824383", "description_keywords": ["FAGE", "GRK"], "canonical_match": "Greek yogurt", "shelf_price": 7.79, "member_price": 7.79 },
+    { "code": "427381", "description_keywords": ["KS", "ORG", "EGGS"], "canonical_match": "Eggs", "shelf_price": 7.49, "member_price": 7.49 },
+    { "code": "1874996", "description_keywords": ["KS", "WLD", "BLBRY"], "canonical_match": null, "shelf_price": 12.99, "member_price": 12.99 },
+    { "code": "6262016", "description_keywords": ["KS", "BATH"], "canonical_match": null, "shelf_price": 20.99, "member_price": 20.99 },
+    { "code": "251680", "description_keywords": ["ORG", "RASPBRY"], "canonical_match": null, "shelf_price": 8.49, "member_price": 8.49 },
+    { "code": "647465", "description_keywords": ["AVOCADOS"], "canonical_match": null, "shelf_price": 6.99, "member_price": 6.99 },
+    { "code": "1644309", "description_keywords": ["KS", "SOCKEYE"], "canonical_match": null, "shelf_price": 21.99, "member_price": 21.99 },
+    { "code": "791185", "description_keywords": ["ORG", "BLACKBRY"], "canonical_match": null, "shelf_price": 6.49, "member_price": 6.49 },
+    { "code": "617686", "description_keywords": ["SOFTSOAP"], "canonical_match": null, "shelf_price": 11.99, "member_price": 11.99 }
+  ]
+}

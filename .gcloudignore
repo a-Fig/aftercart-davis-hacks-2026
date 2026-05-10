@@ -1,0 +1,39 @@
+# .gcloudignore — controls what gcloud uploads to Cloud Build as the source
+# tarball. Independent of .dockerignore (which runs INSIDE the build).
+#
+# IMPORTANT: when this file exists, gcloud uses it INSTEAD of .gitignore.
+# The OFF SQLite is downloaded from GCS at startup, not baked into the image.
+
+# Standard ignores
+.git/
+.gitignore
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Local env / secrets — never upload
+.env
+.env.local
+.env.*.local
+web/.env.local
+
+# Local caches and build artifacts
+*.tsbuildinfo
+tmp/
+web/tmp/
+
+# OFF data — downloaded from GCS at startup, not included in the image
+data/
+
+# Receipt photos, ground-truth data, experiments output — not for the runtime
+receipts/inbox/
+experiments/tmp/
+experiments/ground-truth/
+
+# Editor / OS noise
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db

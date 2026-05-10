@@ -1,0 +1,13 @@
+{
+  "image": "IMG_6878.jpg",
+  "store_name": "Felipes Market",
+  "store_address_substr": "1101 West El Camino",
+  "receipt_date": "2026-04-25",
+  "receipt_total": 23.11,
+  "item_count": 3,
+  "items": [
+    { "code": "3147", "description_keywords": ["COCKTAIL", "TOMATOES"], "canonical_match": null, "quantity": 3.71, "unit": "lb", "shelf_price": 7.38, "member_price": 7.38 },
+    { "code": "3147", "description_keywords": ["COCKTAIL", "TOMATOES"], "canonical_match": null, "quantity": 3.89, "unit": "lb", "shelf_price": 7.74, "member_price": 7.74 },
+    { "code": "4860112620406", "description_keywords": ["POMEGRANATE"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 7.99, "member_price": 7.99 }
+  ]
+}

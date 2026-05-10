@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #__next { height: 100%; }
+body { background: #1a1a1a; font-family: var(--font-dm-sans), 'DM Sans', sans-serif; }
+
+/* ── Type scale (7 stops) ── */
+:root {
+  --t-xs:   11px;
+  --t-sm:   13px;
+  --t-base: 15px;
+  --t-md:   17px;
+  --t-lg:   22px;
+  --t-xl:   30px;
+  --t-disp: 46px;
+}
+
+/* ── App shell: centered 430px column ── */
+.app-shell {
+  max-width: 430px;
+  width: 100%;
+  height: 100vh;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 24px 80px rgba(0,0,0,0.6);
+}
+
+/* Screens scroll inside the shell, not the page */
+.screen-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Keyframes ── */
+@keyframes fadeUp   { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scanLine { 0% { top: 0; } 100% { top: calc(100% - 2px); } }
+@keyframes slideUp  { from { transform: translateY(100%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes popIn    { from { transform: scale(0.94); opacity: 0; } to { transform: none; opacity: 1; } }

@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AfterCart — pipeline comparison</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            ink: { 950: '#0b0d12', 900: '#11141c', 800: '#171b26', 700: '#1f2433', 600: '#2a3043' },
+            line: '#2a3043',
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    pre, code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .receipt-img { max-height: 80vh; }
+    /* subtle scrollbar in dark mode */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #11141c; }
+    ::-webkit-scrollbar-thumb { background: #2a3043; border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a4258; }
+    .pulse-good { box-shadow: inset 0 0 0 1px rgba(34,197,94,.4); }
+    .pulse-bad  { box-shadow: inset 0 0 0 1px rgba(239,68,68,.45); }
+    .pulse-warn { box-shadow: inset 0 0 0 1px rgba(234,179,8,.45); }
+    details > summary { list-style: none; cursor: pointer; }
+    details > summary::-webkit-details-marker { display: none; }
+    .chev { transition: transform .15s ease; }
+    details[open] > summary .chev { transform: rotate(90deg); }
+  </style>
+</head>
+<body class="bg-ink-950 text-zinc-200 antialiased">
+  <div class="min-h-screen flex">
+    <!-- ── Sidebar ─────────────────────────────────────────────────── -->
+    <aside class="w-72 shrink-0 border-r border-line bg-ink-900 sticky top-0 h-screen overflow-y-auto">
+      <div class="p-5 border-b border-line">
+        <div class="text-xs uppercase tracking-wider text-zinc-500 mb-1">AfterCart</div>
+        <div class="text-lg font-semibold">Pipeline comparison</div>
+        <div class="text-xs text-zinc-500 mt-1" id="generated-at"></div>
+      </div>
+
+      <div class="p-5 border-b border-line">
+        <div class="text-xs uppercase tracking-wider text-zinc-500 mb-3">Aggregate · 8 receipts · 41 items</div>
+        <div id="agg-table" class="text-xs"></div>
+      </div>
+
+      <nav id="receipt-list" class="py-2"></nav>
+    </aside>
+
+    <!-- ── Main ────────────────────────────────────────────────────── -->
+    <main id="main" class="flex-1 min-w-0 p-6 space-y-6"></main>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    // ── small DOM helpers ───────────────────────────────────────────
+    const $ = (sel, root = document) => root.querySelector(sel)
+    const h = (tag, props = {}, ...children) => {
+      const el = document.createElement(tag)
+      for (const [k, v] of Object.entries(props || {})) {
+        if (k === 'class') el.className = v
+        else if (k === 'html') el.innerHTML = v
+        else if (k.startsWith('on')) el.addEventListener(k.slice(2), v)
+        else el.setAttribute(k, v)
+      }
+      for (const c of children.flat().filter((c) => c != null && c !== false)) {
+        el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c)
+      }
+      return el
+    }
+    const fmt = (n) => n == null ? '—' : (typeof n === 'number' ? n.toFixed(2) : String(n))
+    const money = (n) => n == null ? '—' : '$' + Number(n).toFixed(2)
+    const pct = (a, b) => b ? ((a/b)*100).toFixed(1) + '%' : '—'
+
+    const PIPES = [
+      { id: 'gpt', label: 'GPT-5-nano (vision)',     color: 'amber',   sub: 'OpenRouter call per receipt' },
+      { id: 'v1',  label: 'Vision + heuristic v1',   color: 'sky',     sub: 'web/lib/receipts/parse.mjs' },
+      { id: 'v2',  label: 'Vision + parse-v2 + match-v2', color: 'emerald', sub: 'experiments/lib/*' },
+    ]
+
+    const COLORS = {
+      amber:   { ring: 'ring-amber-500/40',   bg: 'bg-amber-500/10',   text: 'text-amber-300',   chip: 'bg-amber-500/20 text-amber-200 ring-1 ring-amber-500/30' },
+      sky:     { ring: 'ring-sky-500/40',     bg: 'bg-sky-500/10',     text: 'text-sky-300',     chip: 'bg-sky-500/20 text-sky-200 ring-1 ring-sky-500/30' },
+      emerald: { ring: 'ring-emerald-500/40', bg: 'bg-emerald-500/10', text: 'text-emerald-300', chip: 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-500/30' },
+    }
+
+    // Compare a parsed item to ground-truth items by alignment used in score.mjs
+    function alignParsedToTruth(parsedItems, truthItems) {
+      const truth = truthItems.map((t, i) => ({ ...t, _idx: i, _used: false }))
+      const parsed = parsedItems.map((p, i) => ({ ...p, _idx: i, _used: false, _truth_idx: null }))
+
+      function alignmentScore(p, t) {
+        let s = 0
+        if (t.code && p.code && codeMatches(p.code, t.code)) s += 0.5
+        const desc = (p.description ?? p.raw_text ?? '').toUpperCase()
+        if (t.description_keywords?.length) {
+          const hits = t.description_keywords.filter((kw) => desc.includes(kw.toUpperCase())).length
+          s += 0.4 * (hits / t.description_keywords.length)
+        }
+        const pp = p.member_price ?? p.shelf_price
+        const tp = t.member_price ?? t.shelf_price
+        if (pp != null && tp != null) {
+          const d = Math.abs(Number(pp) - Number(tp))
+          if (d < 0.01) s += 0.2
+          else if (d < 0.10) s += 0.1
+        }
+        return s
+      }
+      function codeMatches(a, b) {
+        if (a == null && b == null) return true
+        if (a == null || b == null) return false
+        const A = String(a).replace(/^0+/, ''), B = String(b).replace(/^0+/, '')
+        return A === B || A.includes(B) || B.includes(A)
+      }
+
+      for (const t of truth) {
+        let bestIdx = -1, bestScore = 0
+        for (const p of parsed) {
+          if (p._used) continue
+          const s = alignmentScore(p, t)
+          if (s > bestScore) { bestScore = s; bestIdx = p._idx }
+        }
+        if (bestIdx >= 0 && bestScore >= 0.4) {
+          parsed[bestIdx]._used = true
+          parsed[bestIdx]._truth_idx = t._idx
+          t._used = true
+        }
+      }
+
+      // Per-parsed verdict
+      for (const p of parsed) {
+        if (!p._used) { p._verdict = 'spurious'; continue }
+        const t = truthItems[p._truth_idx]
+        const tp = t.member_price ?? t.shelf_price
+        const pp = p.member_price ?? p.shelf_price
+        const priceOk = tp != null && pp != null && Math.abs(Number(tp) - Number(pp)) < 0.01
+        const codeOk = codeMatches(p.code, t.code)
+        const qOk = qtyMatches(p, t)
+        if (priceOk && codeOk && qOk) p._verdict = 'good'
+        else p._verdict = 'partial'
+        p._truth = t
+        p._issues = { priceOk, codeOk, qOk }
+      }
+
+      // Missing truth items
+      const missing = truth.filter((t) => !t._used)
+      return { parsed, missing }
+    }
+
+    function qtyMatches(p, t) {
+      if (t.quantity == null) return p.quantity == null || p.quantity === 1
+      if (p.quantity == null) return false
+      const qOk = Math.abs(Number(p.quantity) - Number(t.quantity)) < 0.05
+      const u = (s) => !s ? null : (['lb','lbs','pound','pounds'].includes(String(s).toLowerCase()) ? 'lb'
+                          : ['oz','ounce','ounces'].includes(String(s).toLowerCase()) ? 'oz'
+                          : ['each','ea','count','ct','unit','units',''].includes(String(s).toLowerCase()) ? 'each'
+                          : String(s).toLowerCase())
+      const tu = u(t.unit), pu = u(p.unit)
+      const uOk = !tu || !pu || tu === pu
+      return qOk && uOk
+    }
+
+    // ── Sidebar ────────────────────────────────────────────────────
+    function renderSidebar(data) {
+      $('#generated-at').textContent = 'generated ' + new Date(data.generated_at).toLocaleString()
+
+      const agg = data.aggregate
+      const refAgg = agg.v2 // any pipeline — they all see the same truth set
+      const itemMax = refAgg.truth_items
+      const recMax  = refAgg.receipts
+
+      const headerRow = h('div', { class: 'flex items-center justify-between pb-2 mb-1 border-b border-line' },
+        h('div', { class: 'text-zinc-500' }, 'metric'),
+        h('div', { class: 'flex gap-2' },
+          ...PIPES.map((p) => h('span', { class: `w-12 text-right text-[10px] uppercase ${COLORS[p.color].text}` }, p.id))
+        )
+      )
+
+      const row = (label, get, mode) => {
+        // mode: 'pct' (best=highest, show %), 'count' (best=highest, show n/total),
+        //       'spurious' (best=lowest, show n)
+        const vals = PIPES.map((p) => get(agg[p.id]))
+        const target = mode === 'spurious' ? Math.min(...vals) : Math.max(...vals)
+        const tieCount = vals.filter((x) => x === target).length
+        return h('div', { class: 'flex items-center justify-between py-1.5 border-b border-ink-800 last:border-0' },
+          h('div', { class: 'text-zinc-400' }, label),
+          h('div', { class: 'flex gap-2 mono text-xs' },
+            ...vals.map((v, i) => {
+              const isBest = v === target && tieCount < vals.length
+              const cls = isBest ? COLORS[PIPES[i].color].text + ' font-semibold' : 'text-zinc-500'
+              const display =
+                mode === 'pct'   ? pct(v, itemMax)
+              : mode === 'count' ? `${v}/${recMax}`
+              :                    String(v)
+              return h('span', { class: `${cls} w-12 text-right`, title: PIPES[i].label }, display)
+            })
+          )
+        )
+      }
+
+      $('#agg-table').replaceChildren(
+        headerRow,
+        row('item recall',  (a) => a.items_matched,               'pct'),
+        row('price',        (a) => a.items_with_correct_price,    'pct'),
+        row('code',         (a) => a.items_with_correct_code,     'pct'),
+        row('quantity',     (a) => a.items_with_correct_quantity, 'pct'),
+        row('store name',   (a) => a.store_name_ok,               'count'),
+        row('total',        (a) => a.receipt_total_ok,            'count'),
+        row('spurious',     (a) => a.spurious_items,              'spurious'),
+      )
+
+      const list = $('#receipt-list')
+      list.replaceChildren()
+      for (const r of data.receipts) {
+        const v2 = r.pipelines.v2.score
+        const tag = (ok, label) => h('span', { class: `text-[10px] px-1.5 py-0.5 rounded mono ${ok ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}` }, label)
+        const item = h('a', {
+            href: '#' + r.stem,
+            class: 'block px-5 py-3 border-l-2 border-transparent hover:bg-ink-800 hover:border-line',
+            'data-stem': r.stem,
+          },
+          h('div', { class: 'flex items-center justify-between' },
+            h('div', { class: 'text-sm font-medium' }, r.stem),
+            h('div', { class: 'text-xs text-zinc-500 mono' }, money(r.truth.receipt_total))
+          ),
+          h('div', { class: 'text-xs text-zinc-500 mt-0.5' }, r.truth.store_name),
+          h('div', { class: 'flex gap-1 mt-2' },
+            tag(v2.store_name_ok && v2.receipt_total_ok, 'meta'),
+            tag(v2.items_matched === v2.item_count_expected, `items ${v2.items_matched}/${v2.item_count_expected}`),
+            tag(v2.items_with_correct_price === v2.item_count_expected, '$'),
+            v2.spurious_items === 0 ? tag(true, '0 spur.') : tag(false, `${v2.spurious_items} spur.`),
+          ),
+        )
+        list.appendChild(item)
+      }
+    }
+
+    // ── Main: per-receipt section ─────────────────────────────────
+    function renderMain(data) {
+      const main = $('#main')
+      main.replaceChildren()
+      for (const r of data.receipts) {
+        main.appendChild(renderReceiptSection(r))
+      }
+    }
+
+    function renderReceiptSection(r) {
+      const sec = h('section', { id: r.stem, class: 'scroll-mt-4 rounded-2xl bg-ink-900 ring-1 ring-line overflow-hidden' })
+
+      // Header
+      const truth = r.truth
+      sec.appendChild(h('header', { class: 'p-5 border-b border-line flex items-start justify-between gap-4' },
+        h('div', {},
+          h('div', { class: 'text-xl font-semibold' }, `${r.stem} · ${truth.store_name}`),
+          h('div', { class: 'text-sm text-zinc-500 mt-0.5' },
+            `${truth.receipt_date ?? 'no date'} · `,
+            h('span', { class: 'mono' }, money(truth.receipt_total)),
+            ` · ${truth.items.length} items`,
+            truth.notes ? h('div', { class: 'text-xs text-amber-300/70 mt-1 italic' }, '* ' + truth.notes) : null,
+          )
+        ),
+        h('div', { class: 'flex gap-3 text-xs' },
+          ...PIPES.map((p) => {
+            const score = r.pipelines[p.id]?.score
+            if (!score) return h('div', { class: 'text-zinc-600' }, `${p.id}: —`)
+            const ok = score.items_matched === score.item_count_expected
+                    && score.items_with_correct_price === score.item_count_expected
+                    && score.items_with_correct_code === score.item_count_expected
+                    && score.items_with_correct_quantity === score.item_count_expected
+                    && score.spurious_items === 0
+            return h('div', { class: `px-3 py-1.5 rounded ${COLORS[p.color].chip} mono` },
+              `${p.id} · ${score.items_matched}/${score.item_count_expected}${ok ? ' ✓' : ''}`
+            )
+          })
+        )
+      ))
+
+      // Image + 3-column comparison
+      const grid = h('div', { class: 'grid grid-cols-12 gap-4 p-5' })
+
+      // Image column
+      grid.appendChild(h('div', { class: 'col-span-12 lg:col-span-3' },
+        h('img', { src: r.image, alt: r.stem, class: 'receipt-img w-full rounded-lg ring-1 ring-line bg-zinc-100' }),
+        h('details', { class: 'mt-3 text-xs' },
+          h('summary', { class: 'text-zinc-500 hover:text-zinc-300 select-none' },
+            h('span', { class: 'chev inline-block mr-1' }, '▸'),
+            'Vision OCR text'
+          ),
+          h('pre', { class: 'mt-2 text-[11px] text-zinc-400 bg-ink-950 p-3 rounded ring-1 ring-line max-h-96 overflow-auto whitespace-pre-wrap' },
+            r.vision_text || '(no Vision OCR cached)'
+          )
+        )
+      ))
+
+      // Pipeline columns
+      const cols = h('div', { class: 'col-span-12 lg:col-span-9 grid grid-cols-1 xl:grid-cols-3 gap-4' })
+      for (const pipe of PIPES) {
+        cols.appendChild(renderPipelineCol(pipe, r.pipelines[pipe.id], truth))
+      }
+      grid.appendChild(cols)
+      sec.appendChild(grid)
+
+      return sec
+    }
+
+    function renderPipelineCol(pipe, p, truth) {
+      const c = COLORS[pipe.color]
+      const col = h('div', { class: `rounded-xl ring-1 ring-line ${c.bg} flex flex-col min-h-0` })
+
+      // Header
+      col.appendChild(h('div', { class: `px-4 py-3 border-b border-line ${c.bg}` },
+        h('div', { class: `text-sm font-semibold ${c.text}` }, pipe.label),
+        h('div', { class: 'text-[10px] text-zinc-500 mt-0.5' }, pipe.sub),
+      ))
+
+      if (!p?.parsed) {
+        col.appendChild(h('div', { class: 'p-4 text-zinc-500 text-sm italic' }, 'no output'))
+        return col
+      }
+
+      const parsed = p.parsed
+      const score = p.score
+      const matches = p.matches || []
+
+      // Meta strip
+      const metaItem = (label, val, ok) => h('div', { class: `flex items-center justify-between py-1 text-xs` },
+        h('span', { class: 'text-zinc-500' }, label),
+        h('span', { class: `mono ${ok === true ? 'text-emerald-300' : ok === false ? 'text-rose-300' : 'text-zinc-300'}` }, String(val ?? '—'))
+      )
+      col.appendChild(h('div', { class: 'px-4 py-3 border-b border-line/60' },
+        metaItem('store',  parsed.store_name,    score?.store_name_ok),
+        metaItem('date',   parsed.receipt_date,  score?.receipt_date_ok),
+        metaItem('total',  money(parsed.receipt_total), score?.receipt_total_ok),
+        metaItem('items',  `${(parsed.items ?? []).length} parsed`, null),
+        parsed._parse_ms != null ? metaItem('parse', parsed._parse_ms + 'ms', null) : null,
+        parsed._match_ms != null ? metaItem('match', parsed._match_ms + 'ms', null) : null,
+      ))
+
+      // Items
+      const items = (parsed.items ?? [])
+      const { parsed: aligned, missing } = alignParsedToTruth(items, truth.items)
+
+      const itemsBox = h('div', { class: 'p-3 space-y-1.5 overflow-x-auto' })
+
+      if (aligned.length === 0) {
+        itemsBox.appendChild(h('div', { class: 'text-zinc-500 text-sm italic px-2 py-3' }, 'no items extracted'))
+      }
+
+      for (let i = 0; i < aligned.length; i++) {
+        const it = aligned[i]
+        const m = matches[i]?.match
+        const verdict = it._verdict
+        const ringCls = verdict === 'good' ? 'pulse-good'
+                       : verdict === 'spurious' ? 'pulse-warn'
+                       : 'pulse-bad'
+
+        const desc = it.description || it.raw_text || '—'
+        const head = h('div', { class: 'flex items-baseline justify-between gap-2' },
+          h('div', { class: 'truncate text-sm', title: desc }, desc),
+          h('div', { class: 'mono text-sm shrink-0' },
+            h('span', { class: 'text-zinc-400' }, money(it.shelf_price)),
+            it.member_price !== it.shelf_price
+              ? h('span', { class: 'text-amber-300' }, ' → ' + money(it.member_price))
+              : null,
+          )
+        )
+        const sub = h('div', { class: 'flex items-center gap-2 text-[11px] text-zinc-500 mt-0.5 mono' },
+          it.code ? h('span', {}, `[${it.code}]`) : null,
+          it.quantity != null ? h('span', {}, `${it.quantity}${it.unit ? ' ' + it.unit : ''}`) : null,
+          it._verdict === 'spurious' ? h('span', { class: 'text-amber-300' }, 'spurious') : null,
+          it._verdict === 'partial' ? h('span', { class: 'text-rose-300' },
+            [
+              !it._issues.priceOk ? 'price' : null,
+              !it._issues.codeOk ? 'code' : null,
+              !it._issues.qOk ? 'qty' : null,
+            ].filter(Boolean).join(', ') + ' wrong'
+          ) : null,
+        )
+
+        let matchLine = null
+        if (m) {
+          const scoreCls = m.score >= 0.7 ? 'text-emerald-300' : m.score >= 0.5 ? 'text-amber-300' : 'text-zinc-400'
+          matchLine = h('div', { class: 'flex items-center gap-1.5 mt-1 text-[11px]' },
+            h('span', { class: 'text-zinc-500' }, '→'),
+            h('span', { class: 'text-zinc-200 truncate', title: m.name }, m.name),
+            h('span', { class: `mono ${scoreCls}` }, `s=${m.score.toFixed(2)}`),
+          )
+        } else {
+          matchLine = h('div', { class: 'mt-1 text-[11px] text-zinc-600' }, '→ no canonical match')
+        }
+
+        itemsBox.appendChild(h('div', { class: `rounded px-2.5 py-1.5 bg-ink-800/60 ${ringCls}` }, head, sub, matchLine))
+      }
+
+      for (const miss of missing) {
+        itemsBox.appendChild(h('div', { class: 'rounded px-2.5 py-1.5 bg-rose-500/5 ring-1 ring-rose-500/30' },
+          h('div', { class: 'text-sm text-rose-300' }, '↓ MISSED: ' + miss.description_keywords.join(' ')),
+          h('div', { class: 'text-[11px] text-zinc-500 mt-0.5 mono' },
+            (miss.code ? `[${miss.code}] ` : '') + (miss.quantity != null ? `${miss.quantity}${miss.unit ? ' ' + miss.unit : ''} · ` : '') + money(miss.member_price ?? miss.shelf_price)
+          ),
+        ))
+      }
+
+      col.appendChild(itemsBox)
+
+      // Raw JSON toggle
+      col.appendChild(h('details', { class: 'border-t border-line/60' },
+        h('summary', { class: 'px-4 py-2 text-xs text-zinc-500 hover:text-zinc-300' },
+          h('span', { class: 'chev inline-block mr-1' }, '▸'),
+          'parsed JSON'
+        ),
+        h('pre', { class: 'mx-3 mb-3 p-3 text-[11px] text-zinc-300 bg-ink-950 rounded ring-1 ring-line max-h-96 overflow-auto' },
+          JSON.stringify(stripInternal(parsed), null, 2)
+        ),
+      ))
+
+      return col
+    }
+
+    function stripInternal(obj) {
+      const out = {}
+      for (const [k, v] of Object.entries(obj)) {
+        if (k.startsWith('_')) continue
+        out[k] = v
+      }
+      return out
+    }
+
+    // ── go ──────────────────────────────────────────────────────────
+    function showError(label, err) {
+      console.error(label, err)
+      const banner = document.createElement('div')
+      banner.className = 'fixed top-0 left-0 right-0 z-50 p-4 bg-rose-900/90 text-rose-100 mono text-xs whitespace-pre-wrap'
+      banner.textContent = `[${label}] ${err && err.stack ? err.stack : String(err)}`
+      document.body.appendChild(banner)
+    }
+    window.addEventListener('error', (e) => showError('window.error', e.error || e.message))
+    window.addEventListener('unhandledrejection', (e) => showError('unhandledrejection', e.reason))
+
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        if (!window.RECEIPT_DATA) {
+          document.body.innerHTML = '<div class="p-10 text-rose-300">data.js missing — run <code class="bg-ink-800 px-1.5 py-0.5 rounded">node experiments/scripts/build-viewer.mjs</code> first.</div>'
+          return
+        }
+        renderSidebar(window.RECEIPT_DATA)
+        renderMain(window.RECEIPT_DATA)
+      } catch (err) {
+        showError('render', err)
+      }
+    })
+  </script>
+</body>
+</html>

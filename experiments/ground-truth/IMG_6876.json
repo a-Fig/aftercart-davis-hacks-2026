@@ -1,0 +1,37 @@
+{
+  "image": "IMG_6876.jpg",
+  "store_name": "Trader Joe's",
+  "store_address_substr": "2310 Homestead",
+  "receipt_date": "2026-04-15",
+  "receipt_total": 12.45,
+  "item_count": 5,
+  "items": [
+    {
+      "code": null,
+      "description_keywords": ["PIE", "CRUST"],
+      "canonical_match": null,
+      "quantity": 1,
+      "unit": null,
+      "shelf_price": 4.49,
+      "member_price": 4.49
+    },
+    {
+      "code": null,
+      "description_keywords": ["PLANTAIN", "CHIPS", "JERK"],
+      "canonical_match": null,
+      "quantity": 2,
+      "unit": "each",
+      "shelf_price": 3.96,
+      "member_price": 3.96
+    },
+    {
+      "code": null,
+      "description_keywords": ["PLANTAIN", "CHIPS", "JERK"],
+      "canonical_match": null,
+      "quantity": 2,
+      "unit": "each",
+      "shelf_price": 3.98,
+      "member_price": 3.98
+    }
+  ]
+}

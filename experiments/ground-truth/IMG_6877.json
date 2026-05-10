@@ -1,0 +1,19 @@
+{
+  "image": "IMG_6877.jpg",
+  "store_name": "Foothill Produce",
+  "store_address_substr": "2310 Homestead",
+  "receipt_date": "2026-04-15",
+  "receipt_total": 31.94,
+  "item_count": 12,
+  "items": [
+    { "code": "801460101265", "description_keywords": ["CAPUTO", "FLOUR"], "canonical_match": "All-purpose flour", "quantity": 1, "unit": null, "shelf_price": 5.49, "member_price": 5.49 },
+    { "code": "9002859069048", "description_keywords": ["FEINY", "DIGES"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 3.49, "member_price": 3.49 },
+    { "code": "9002859069048", "description_keywords": ["FEINY", "DIGES"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 3.49, "member_price": 3.49 },
+    { "code": "052851112050", "description_keywords": ["SADAF", "FENNEL"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 3.49, "member_price": 3.49 },
+    { "code": "052851113187", "description_keywords": ["SADAF", "OREGANO"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 2.49, "member_price": 2.49 },
+    { "code": "3125", "description_keywords": ["HABANERO", "PEPPER"], "canonical_match": null, "quantity": 0.29, "unit": "lb", "shelf_price": 2.03, "member_price": 2.03 },
+    { "code": "6622", "description_keywords": ["BANANA", "CHIPS"], "canonical_match": null, "quantity": 0.26, "unit": "lb", "shelf_price": 1.04, "member_price": 1.04 },
+    { "code": "3488", "description_keywords": ["BUNNY", "TOMMY", "MANGO"], "canonical_match": null, "quantity": 4, "unit": "each", "shelf_price": 5.16, "member_price": 5.16 },
+    { "code": "4395", "description_keywords": ["MEXICAN", "PAPAYA"], "canonical_match": null, "quantity": 4.08, "unit": "lb", "shelf_price": 5.26, "member_price": 5.26 }
+  ]
+}

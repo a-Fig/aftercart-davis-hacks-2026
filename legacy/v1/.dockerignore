@@ -1,0 +1,8 @@
+# Inclusion-style: deny everything, then re-allow only what the build needs.
+# OFF SQLite is NOT included — downloaded from GCS at container startup.
+*
+!web
+web/node_modules
+web/.next
+web/.env.local
+web/tmp

@@ -1,0 +1,13 @@
+{
+  "image": "IMG_1882.jpg",
+  "store_name": "Smart & Final",
+  "store_address_substr": "1265 S. MARY",
+  "receipt_date": "2026-04-08",
+  "receipt_total": 5.97,
+  "item_count": 3,
+  "items": [
+    { "code": null, "description_keywords": ["CELERY"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 1.99, "member_price": 1.99 },
+    { "code": null, "description_keywords": ["FIRST", "STREET", "GARBANZO"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 1.99, "member_price": 1.99 },
+    { "code": null, "description_keywords": ["FIRST", "STREET", "GARBANZO"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 1.99, "member_price": 1.99 }
+  ]
+}

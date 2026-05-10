@@ -1,0 +1,12 @@
+{
+  "image": "IMG_6880.jpg",
+  "store_name": "Trader Joe's",
+  "store_address_substr": "316 West El Camino",
+  "receipt_date": "2026-04-25",
+  "receipt_total": 13.98,
+  "item_count": 2,
+  "items": [
+    { "code": null, "description_keywords": ["COOKIES", "SEA", "SALT", "CHOC"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 4.99, "member_price": 4.99 },
+    { "code": null, "description_keywords": ["POUND", "PLUS", "DK", "CHOC"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 8.99, "member_price": 8.99 }
+  ]
+}

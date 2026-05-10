@@ -1,0 +1,14 @@
+{
+  "image": "IMG_6879.jpg",
+  "store_name": "Trader Joe's",
+  "store_address_substr": "316 West El Camino",
+  "receipt_date": "2026-04-25",
+  "receipt_total": 18.56,
+  "item_count": 4,
+  "items": [
+    { "code": null, "description_keywords": ["SPINACH", "ARTICHOKE", "DIP"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 3.79, "member_price": 3.79 },
+    { "code": null, "description_keywords": ["BREADED", "FISH", "STICKS"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 5.49, "member_price": 5.49 },
+    { "code": null, "description_keywords": ["3", "CHEESE", "SPINACH"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 3.79, "member_price": 3.79 },
+    { "code": null, "description_keywords": ["MUSHROOM", "TRUFFLE", "FLATB"], "canonical_match": null, "quantity": 1, "unit": null, "shelf_price": 5.49, "member_price": 5.49 }
+  ]
+}

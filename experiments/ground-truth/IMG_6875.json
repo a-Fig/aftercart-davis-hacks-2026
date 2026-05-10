@@ -1,0 +1,28 @@
+{
+  "image": "IMG_6875.jpg",
+  "store_name": "Safeway",
+  "store_address_substr": "20620 HOMESTEAD",
+  "receipt_date": "2026-04-15",
+  "receipt_total": 30.96,
+  "item_count": 4,
+  "items": [
+    {
+      "code": "64313031460",
+      "description_keywords": ["GINOS", "EAST", "DEEP"],
+      "canonical_match": null,
+      "quantity": 3,
+      "unit": "each",
+      "shelf_price": 32.97,
+      "member_price": 17.97
+    },
+    {
+      "code": "7990000169",
+      "description_keywords": ["WYMAN", "WILD"],
+      "canonical_match": null,
+      "quantity": 1,
+      "unit": null,
+      "shelf_price": 17.99,
+      "member_price": 12.99
+    }
+  ]
+}
