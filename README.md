@@ -67,7 +67,16 @@ This is a portfolio piece — full setup steps live in [docs/ARCHITECTURE.md](do
 
 ## Team
 
-Built by **[Tyler Darisme](https://github.com/a-Fig)** and **Thy Tang**, with [Claude](https://www.anthropic.com/claude) / [Claude Code](https://www.anthropic.com/claude-code) as the AI pair-programming partner.
+Built by **[Tyler Darisme](https://github.com/a-Fig)** and **Thy Tang**.
+
+## Built with
+
+This project was developed end-to-end with an AI-assisted workflow:
+
+- **[Reconstruct](https://reconstruct.app)** — agent coordination. Seeded the project into a shared context (`.reconstruct/context.md`, gitignored), planned work as discrete capsules through the manager agent, and coordinated worker agents executing those plans against the codebase. Reconstruct is how the v1→v2 redesign documented in [docs/DESIGN-EVOLUTION.md](docs/DESIGN-EVOLUTION.md) stayed coherent across many sessions.
+- **[Claude](https://www.anthropic.com/claude) / [Claude Code](https://www.anthropic.com/claude-code)** — the primary pair-programming partner. Most of the production code, the hand-written schema, and the polished docs in this repo were written through Claude Code sessions, often as the worker agent inside a Reconstruct capsule.
+
+The product design, architectural decisions, and integration work are the human authors'. The tooling above turned those decisions into code at the pace this repo reflects.
 
 ## License
 
